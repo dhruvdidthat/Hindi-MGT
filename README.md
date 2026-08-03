@@ -1,4 +1,88 @@
-# Understanding the Challenges in Detecting Machine Generated Hindi Text
+# Understanding the Challenges in Detecting Machine-Generated Hindi Text
 
-- Codes and datasets are in the training_models folder
-- Prompt Change data is in the prompt_change folder
+This repository contains the implementation used in the ACL submission
+"Understanding the Challenges in Detecting Machine-Generated Hindi Text".
+
+## Repository Contents
+
+| Script | Description |
+|--------|-------------|
+| `IndicBert_train.py` | Fine-tunes IndicBERT for binary human vs. machine-generated Hindi text classification. |
+| `IndicBert_inference.py` | Evaluates trained IndicBERT models on all train→test dataset/LLM combinations. |
+| `radar_train.py` | Hindi adaptation of RADAR using XLM-RoBERTa and mT5 paraphrasing. |
+| `radar_inference.py` | Evaluates trained RADAR models. |
+| `text_fluroscopy_train.py` | Trains the Text Fluoroscopy detector using hidden-state KL features. |
+| `text_fluroscopy_inference.py` | Runs inference for Text Fluoroscopy. |
+| `conda.py` | Training and inference pipeline for the ConDA domain adaptation method. |
+| `gpt_zero.py` | GPTZero-style perplexity detector using mGPT with threshold learning. |
+| `detect_gpt.py` | DetectGPT implementation using mGPT and mT5 perturbations. |
+
+## Dataset Layout
+
+```
+training_data/
+    hindisumm/
+        hindisumm_train_gemini.csv
+        hindisumm_train_llama3.csv
+        hindisumm_train_qwen3.csv
+    xquad/
+        ...
+
+testing_data/
+    hindisumm/
+    xquad/
+```
+
+Each CSV should contain:
+
+- `text` : Hindi document
+- `label`: `0 = AI`, `1 = Human`
+
+## Environment
+
+- Python 3.10+
+- CUDA-enabled GPU recommended
+- PyTorch + Hugging Face Transformers
+
+## Installation
+
+```bash
+conda create -n hindi-mgt python=3.10
+conda activate hindi-mgt
+pip install -r requirements.txt
+```
+
+## Running Experiments
+
+Train:
+```bash
+python IndicBert_train.py
+python radar_train.py
+python text_fluroscopy_train.py
+python conda.py
+```
+
+Inference:
+```bash
+python IndicBert_inference.py
+python radar_inference.py
+python text_fluroscopy_inference.py
+python gpt_zero.py
+python detect_gpt.py
+```
+
+Outputs are written into each method's `trained_models/` and `inference_results/`
+directories.
+
+## Notes for Reviewers
+
+- Random seed is fixed to **42** wherever applicable.
+- Experiments assume CUDA if available, otherwise CPU.
+- The code evaluates all combinations of:
+  - Training datasets: HindiSumm, XQuAD-Hindi
+  - Generator LLMs: Gemini, Llama 3, Qwen3
+- Labels follow:
+  - `0 = Machine-generated`
+  - `1 = Human-written`
+- Model checkpoints are stored separately for each dataset/LLM pair.
+
