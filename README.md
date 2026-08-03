@@ -74,7 +74,7 @@ python detect_gpt.py
 Outputs are written into each method's `trained_models/` and `inference_results/`
 directories.
 
-## Notes for Reviewers
+## Notes
 
 - Random seed is fixed to **42** wherever applicable.
 - Some scripts are configured to use CUDA device `cuda:1` by default. If your machine uses a different GPU index, update the device assignment in the script before running it.
