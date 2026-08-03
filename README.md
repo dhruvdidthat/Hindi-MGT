@@ -7,15 +7,15 @@ This repository contains the implementation used in the ACL submission
 
 | Script | Description |
 |--------|-------------|
-| `IndicBert_train.py` | Fine-tunes IndicBERT for binary human vs. machine-generated Hindi text classification. |
-| `IndicBert_inference.py` | Evaluates trained IndicBERT models on all train→test dataset/LLM combinations. |
+| `IndicBert_train.py` | Fine-tunes IndicBERT f|
+| `IndicBert_inference.py` | Evaluates trained IndicBERT models on all train-test dataset/LLM combinations. |
 | `radar_train.py` | Hindi adaptation of RADAR using XLM-RoBERTa and mT5 paraphrasing. |
 | `radar_inference.py` | Evaluates trained RADAR models. |
 | `text_fluroscopy_train.py` | Trains the Text Fluoroscopy detector using hidden-state KL features. |
 | `text_fluroscopy_inference.py` | Runs inference for Text Fluoroscopy. |
-| `conda.py` | Training and inference pipeline for the ConDA domain adaptation method. |
-| `gpt_zero.py` | GPTZero-style perplexity detector using mGPT with threshold learning. |
-| `detect_gpt.py` | DetectGPT implementation using mGPT and mT5 perturbations. |
+| `conda.py` | Training and inference script for the ConDA domain adaptation method. |
+| `gpt_zero.py` | GPTZero-style perplexity detector using mGPT with threshold learning (inferences on all the combinations). |
+| `detect_gpt.py` | DetectGPT implementation using mGPT and mT5 perturbations (inferences on all the combinations). |
 
 ## Dataset Layout
 
@@ -77,7 +77,7 @@ directories.
 ## Notes for Reviewers
 
 - Random seed is fixed to **42** wherever applicable.
-- Experiments assume CUDA if available, otherwise CPU.
+- Some scripts are configured to use CUDA device `cuda:1` by default. If your machine uses a different GPU index, update the device assignment in the script before running it.
 - The code evaluates all combinations of:
   - Training datasets: HindiSumm, XQuAD-Hindi
   - Generator LLMs: Gemini, Llama 3, Qwen3
@@ -85,4 +85,5 @@ directories.
   - `0 = Machine-generated`
   - `1 = Human-written`
 - Model checkpoints are stored separately for each dataset/LLM pair.
-
+- Some models are downloaded automatically from Hugging Face, so internet access is required the first time you run the scripts.
+- The repository is research-oriented and may require GPU memory depending on the model size.

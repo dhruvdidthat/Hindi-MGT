@@ -50,7 +50,7 @@ set_seed(SEED)
 
 logging.basicConfig(level=logging.INFO)
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
 os.makedirs("output_logs", exist_ok=True)
@@ -354,19 +354,12 @@ def accuracy_sum(logits, labels):
     assert classification.shape == labels.shape
     return (classification == labels).float().sum().item()
 
-# ------------------ Data loader builder (modified to accept src_llm & tgt_llm, and optionally using test as target-train) ------------------
+
 def load_datasets(src_data_dir, tgt_data_dir, tokenizer, batch_size, max_sequence_length, random_sequence_length,
-                  src_llm, src_dataset, tgt_llm, tgt_dataset, use_target_test_as_train=False):
-    """
-    If use_target_test_as_train=True: read target "train" data from perturbed_testing_data/{tgt_dataset}/{tgt_dataset}_test_{tgt_llm}_perturb.csv
-    (this implements in-domain "target is the test set of the source data" behavior).
-    Otherwise read target train from perturbed_training_data as originally.
-    """
+                  src_llm, src_dataset, tgt_llm, tgt_dataset):
+
     src_file = os.path.join(src_data_dir, src_dataset, f"{src_dataset}_train_{src_llm}_perturb.csv")
-    if use_target_test_as_train:
-        tgt_file = os.path.join('perturbed_testing_data', tgt_dataset, f"{tgt_dataset}_test_{tgt_llm}_perturb.csv")
-    else:
-        tgt_file = os.path.join(tgt_data_dir, tgt_dataset, f"{tgt_dataset}_train_{tgt_llm}_perturb.csv")
+    tgt_file = os.path.join(tgt_data_dir, tgt_dataset, f"{tgt_dataset}_train_{tgt_llm}_perturb.csv")
 
     if not os.path.exists(src_file):
         raise FileNotFoundError(f"Source file not found: {src_file}")
@@ -572,14 +565,16 @@ def run_inference_on_test(xlm_model, tokenizer, trained_on_dataset, trained_on_l
 
     return metrics
 
+# FIX (hyperparameters): defaults changed to match Table 1 (LR=2e-5, BS=32).
+# FIX (data leakage): removed `use_target_test_as_train` parameter; load_datasets() is
+# called without it and always uses the target TRAIN split for unlabeled adaptation data.
 def run(src_data_dir, tgt_data_dir, src_dataset, tgt_dataset, src_llm, tgt_llm,
-        batch_size=16, max_epochs=4, learning_rate=1e-5, lambda_w=0.5,
+        batch_size=32, max_epochs=4, learning_rate=2e-5, lambda_w=0.5,
         max_sequence_length=256, loss_type='simclr', results_root='CONDA/inference_results',
-        save_model_root='CONDA/trained_models', run_inference_after_train=True,
-        use_target_test_as_train=False):
+        save_model_root='CONDA/trained_models', run_inference_after_train=True):
     set_seed(SEED)
     case_desc = f"SRC={src_dataset}+{src_llm} | TGT={tgt_dataset}+{tgt_llm}"
-    print(f"Starting run: {case_desc} | use_target_test_as_train={use_target_test_as_train}")
+    print(f"Starting run: {case_desc}")
     os.makedirs(results_root, exist_ok=True)
     os.makedirs(save_model_root, exist_ok=True)
 
@@ -592,7 +587,7 @@ def run(src_data_dir, tgt_data_dir, src_dataset, tgt_dataset, src_llm, tgt_llm,
 
     src_train_loader, src_valid_loader, tgt_train_loader = load_datasets(
         src_data_dir, tgt_data_dir, tokenizer, batch_size, max_sequence_length, False,
-        src_llm, src_dataset, tgt_llm, tgt_dataset, use_target_test_as_train=use_target_test_as_train)
+        src_llm, src_dataset, tgt_llm, tgt_dataset)
 
     for epoch in range(max_epochs):
         train_metrics = train_epoch(model, mlp, loss_type, optimizer, device, src_train_loader, tgt_train_loader,
@@ -677,8 +672,7 @@ if __name__ == "__main__":
         print(f"\n🚀 [{case_num}/{total_cases}] Running: SRC={src_dataset}+{src_llm} -> TGT={tgt_dataset}+{tgt_llm}")
         case_num += 1
 
-        use_target_test_as_train = (src_dataset == tgt_dataset and src_llm == tgt_llm)
-        case_type = "in-domain" if use_target_test_as_train else "cross-domain"
+        case_type = "in-domain" if (src_dataset == tgt_dataset and src_llm == tgt_llm) else "cross-domain"
 
         try:
             final_model_path, run_results = run(
@@ -696,8 +690,7 @@ if __name__ == "__main__":
                 loss_type=loss_type,
                 results_root=results_root,
                 save_model_root=save_model_root,
-                run_inference_after_train=True,
-                use_target_test_as_train=use_target_test_as_train
+                run_inference_after_train=True
             )
             all_saved_paths.append(final_model_path)
 

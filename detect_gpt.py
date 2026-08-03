@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+DetectGPT inference script (modified to train all source->target combinations).
+"""
+
 import os
 import re
 import torch
@@ -30,14 +34,18 @@ CHUNK_SIZE = 4
 BUFFER_SIZE = 1
 MASK_TOP_P = 1.0
 
+BASE_MODEL_NAME = "sberbank-ai/mGPT"
+
 os.makedirs(RESULTS_ROOT, exist_ok=True)
 
 pattern = re.compile(r"<extra_id_\d+>")
 
 # -------------------- LOAD MODELS --------------------
-base_model = transformers.AutoModelForCausalLM.from_pretrained("xlm-roberta-base").to(DEVICE)
-base_tokenizer = transformers.AutoTokenizer.from_pretrained("xlm-roberta-base")
-base_tokenizer.pad_token_id = base_tokenizer.eos_token_id
+base_model = transformers.AutoModelForCausalLM.from_pretrained(BASE_MODEL_NAME).to(DEVICE)
+base_model.eval()
+base_tokenizer = transformers.AutoTokenizer.from_pretrained(BASE_MODEL_NAME)
+if base_tokenizer.pad_token_id is None:
+    base_tokenizer.pad_token_id = base_tokenizer.eos_token_id
 
 mask_model = transformers.AutoModelForSeq2SeqLM.from_pretrained("google/mt5-base").to(DEVICE)
 mask_tokenizer = transformers.AutoTokenizer.from_pretrained("google/mt5-base", model_max_length=512)
@@ -152,10 +160,12 @@ for dataset in DATASETS:
 
         acc = accuracy_score(y_true, y_pred)
         f1 = f1_score(y_true, y_pred)
+
         try:
-            auroc = roc_auc_score(y_true, y_score)
+            auroc = roc_auc_score(y_true, [-s for s in y_score])
         except:
             auroc = float("nan")
+
         ai_rec = recall_score(y_true, y_pred, pos_label=0)
         human_rec = recall_score(y_true, y_pred, pos_label=1)
 

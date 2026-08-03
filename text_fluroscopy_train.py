@@ -8,6 +8,8 @@ import os
 from transformers import AutoTokenizer, AutoModel
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, classification_report
 import random
+from huggingface_hub import whoami
+print(whoami()) 
 
 SEED = 42
 def set_seed(seed=42):
@@ -36,7 +38,8 @@ def extract_embeddings(texts, labels):
             embeddings.append((text_embedding, labels[i]))
             if i % 100 == 0:
                 print(f"Processed {i}/{len(texts)}")
-    return embedding
+    # BUG FIX: was `return embedding` (undefined name, singular) -> NameError on every call.
+    return embeddings
 
 # KL DIVERGENCE
 def calculate_kl_divergence(p, q):
@@ -99,8 +102,12 @@ for dataset_name in dataset_list:
 
         kl_train = compute_kl_scores(train_embeddings)
 
-        # PREPARE DATA
-        max_kl_layers = torch.tensor([kl_train.size(1) - 1] * len(train_embeddings))  # last layer
+        num_layers = kl_train.size(1)
+        if num_layers > 2:
+            interior_kl = kl_train[:, 1:num_layers - 1]           # exclude layer 0 and layer N
+            max_kl_layers = torch.argmax(interior_kl, dim=1) + 1  # shift back to true layer index
+        else:
+            max_kl_layers = torch.tensor([num_layers - 1] * len(train_embeddings))
 
         X_train, y_train = [], []
         for (embedding, label), max_layer in zip(train_embeddings, max_kl_layers):

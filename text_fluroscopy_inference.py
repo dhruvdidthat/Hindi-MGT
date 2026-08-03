@@ -87,7 +87,13 @@ def run_inference(train_dataset, train_llm, test_dataset, test_llm, model_name="
     # Compute embeddings
     embeddings = extract_embeddings(texts, tokenizer, embedding_model)
     kl_test = compute_kl_scores(embeddings)
-    max_kl_layers = torch.tensor([kl_test.size(1) - 1] * len(embeddings))
+
+    num_layers = kl_test.size(1)
+    if num_layers > 2:
+        interior_kl = kl_test[:, 1:num_layers - 1]           # exclude layer 0 and layer N
+        max_kl_layers = torch.argmax(interior_kl, dim=1) + 1  # shift back to true layer index
+    else:
+        max_kl_layers = torch.tensor([num_layers - 1] * len(embeddings))
 
     X_test = [embeddings[i][max_kl_layers[i]].mean(dim=0).numpy() for i in range(len(embeddings))]
     y_test = np.array(labels)
@@ -192,4 +198,3 @@ for train_dataset, test_dataset, llm in cross_domain_cases:
         test_dataset=test_dataset,
         test_llm=llm
     )
-

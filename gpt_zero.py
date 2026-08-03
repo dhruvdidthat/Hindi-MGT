@@ -1,3 +1,7 @@
+"""
+GPTZero inference script (modified to train all source->target combinations).
+"""
+
 import os
 import torch
 import pandas as pd
@@ -21,9 +25,10 @@ MASTER_CSV = os.path.join(RESULTS_ROOT, "gptzero_all_results.csv")
 
 os.makedirs(RESULTS_ROOT, exist_ok=True)
 
-# ---------------------- MODEL ----------------------
-MODEL_NAME = "facebook/mbart-large-50"
+MODEL_NAME = "ai-forever/mGPT"
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
 model = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to(device)
 model.eval()
 
@@ -49,6 +54,10 @@ def learn_threshold_from_training(df_train):
     """
     Learns optimal perplexity threshold using ROC (Youden's J statistic).
     Filters invalid (inf / nan) perplexities.
+
+    Labels: 0 = AI, 1 = Human. Low perplexity -> AI-like, so we score with
+    -perplexity and ask roc_curve to treat label 0 (AI) as the positive
+    class. This part of the original code was already self-consistent.
     """
 
     # Keep only valid perplexity values
@@ -129,7 +138,10 @@ def run_gptzero_inference(dataset_name, llm_name):
     y_true = df_test["label"].values
     y_pred = preds
 
-    probs = 1 / (np.array(test_ppl) + 1e-6)
+    test_ppl_arr = np.array(test_ppl, dtype=float)
+    finite_ppl = test_ppl_arr[np.isfinite(test_ppl_arr)]
+    fallback_max = finite_ppl.max() * 10 if finite_ppl.size > 0 else 1e6
+    probs = np.where(np.isfinite(test_ppl_arr), test_ppl_arr, fallback_max)
 
     acc, f1, auroc, ai_recall, human_recall = compute_metrics(
         y_true, y_pred, probs
