@@ -7,7 +7,7 @@ This repository contains the implementation used in the ACL submission
 
 | Script | Description |
 |--------|-------------|
-| `IndicBert_train.py` | Fine-tunes IndicBERT f|
+| `IndicBert_train.py` | Fine-tunes IndicBERT. |
 | `IndicBert_inference.py` | Evaluates trained IndicBERT models on all train-test dataset/LLM combinations. |
 | `radar_train.py` | Hindi adaptation of RADAR using XLM-RoBERTa and mT5 paraphrasing. |
 | `radar_inference.py` | Evaluates trained RADAR models. |
