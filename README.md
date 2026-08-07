@@ -1,7 +1,6 @@
 # Understanding the Challenges in Detecting Machine-Generated Hindi Text
 
-This repository contains the implementation used in the ACL submission
-"Understanding the Challenges in Detecting Machine-Generated Hindi Text".
+This repository contains the implementation used in the paper "Understanding the Challenges in Detecting Machine-Generated Hindi Text".
 
 ## Repository Contents
 
