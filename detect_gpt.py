@@ -41,7 +41,7 @@ MASTER_CSV = os.path.join(RESULTS_ROOT, "detect_gpt_all_results.csv")
 MAX_TOKENS = 512          # implementation choice, not a paper hyperparameter (see docstring)
 
 # --- Paper hyperparameters (Section 5.1) ---
-N_PERTURB = 10            # paper: "10 samples from T5";
+N_PERTURB = 100            # paper: "10 samples from T5";
 SPAN_LENGTH = 2            # paper: swept {2,5,10} on held-out XSum, 2 best
 PCT_WORDS_MASKED = 0.15    # paper: "15% as the mask rate"
 MASK_TOP_P = 1.0           # paper: no top-p truncation on mask filler
@@ -50,7 +50,7 @@ MASK_TEMPERATURE = 1.0     # paper: "sampling directly with temperature 1"
 # --- Throughput knobs, NOT paper hyperparameters ---
 CHUNK_SIZE = 25            # mask-fill generation batch size, tuned for L40 + mt5-base
 BUFFER_SIZE = 1            # matches official reference implementation's default
-LL_BATCH_SIZE = 32         # log-likelihood scoring batch size, tuned for L40 + mGPT
+LL_BATCH_SIZE = 16         # log-likelihood scoring batch size, tuned for L40 + mGPT
 
 # Zero-shot decision threshold on the normalized perturbation discrepancy.
 # score > DECISION_EPSILON  =>  predicted AI / machine-generated
