@@ -3,6 +3,12 @@
 
 """
 DetectGPT inference script (pure zero-shot).
+
+Label convention:
+    0 = Human-written text
+    1 = AI-generated / machine-generated text
+
+This is the raw label convention used by the DetectGPT implementation.
 """
 
 import os

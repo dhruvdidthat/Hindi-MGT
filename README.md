@@ -1,6 +1,6 @@
-# Understanding the Challenges in Detecting Machine-Generated Hindi Text
+# How Well Do MGT Detectors Transfer to Hindi? Performance, Transfer, and Failure Analysis
 
-This repository contains the implementation used in the paper "Understanding the Challenges in Detecting Machine-Generated Hindi Text".
+This repository contains the implementation used in the paper "How Well Do MGT Detectors Transfer to Hindi? Performance, Transfer, and Failure Analysis".
 
 ## Repository Contents
 
@@ -34,8 +34,8 @@ testing_data/
 
 Each CSV should contain:
 
-- `text` : Hindi document
-- `label`: `0 = AI`, `1 = Human`
+- `text`: Hindi document
+- `label`: detector-specific raw class label; see the label convention table below.
 
 ## Environment
 
@@ -80,9 +80,34 @@ directories.
 - The code evaluates all combinations of:
   - Training datasets: HindiSumm, XQuAD-Hindi
   - Generator LLMs: Gemini, Llama 3, Qwen3
-- Labels follow:
-  - `0 = Machine-generated`
-  - `1 = Human-written`
-- Model checkpoints are stored separately for each dataset/LLM pair.
+### Label Conventions
+
+Each detector retains the raw label convention used by its own implementation.
+The conventions are not identical across detectors.
+
+| Detector | Raw label `0` | Raw label `1` |
+|---|---|---|
+| XLM-RoBERTa | AI-generated | Human-written |
+| Indic-BERT | AI-generated | Human-written |
+| CONDA | AI-generated | Human-written |
+| RADAR | AI-generated | Human-written |
+| GPTZero | AI-generated | Human-written |
+| DetectGPT | Human-written | AI-generated |
+| Text-Fluoroscopy | Human-written | AI-generated |
+
+These are the **raw labels produced by the individual detector
+implementations** and should be interpreted according to the detector-specific
+convention above.
+
+For comparative analysis, raw outputs may be converted to a common **canonical
+label convention**:
+
+- `1 = AI-generated / machine-generated`
+- `0 = Human-written`
+
+The canonical convention is only an analysis-level representation; the detector
+implementations themselves are not modified to force a common raw convention.
+
+Notes:
 - Some models are downloaded automatically from Hugging Face, so internet access is required the first time you run the scripts.
 - The repository is research-oriented and may require GPU memory depending on the model size.

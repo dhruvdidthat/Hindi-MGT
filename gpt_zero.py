@@ -1,5 +1,11 @@
 """
 GPTZero inference script (modified to train all source->target combinations).
+
+Label convention:
+    0 = AI-generated / machine-generated text
+    1 = Human-written text
+
+This is the raw label convention used by the GPTZero implementation.
 """
 
 import os

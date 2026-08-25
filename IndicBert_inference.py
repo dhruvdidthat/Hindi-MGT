@@ -1,3 +1,11 @@
+"""
+Label convention:
+    0 = AI-generated / machine-generated text
+    1 = Human-written text
+
+This is the raw label convention used by the Indic-BERT implementation.
+"""
+
 import pandas as pd
 import numpy as np
 import torch

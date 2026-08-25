@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+
+"""
+Label convention:
+    0 = AI-generated / machine-generated text
+    1 = Human-written text
+
+This is the raw label convention used by the RADAR implementation.
+"""
+
 import pandas as pd
 import torch
 import numpy as np

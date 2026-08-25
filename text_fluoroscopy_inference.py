@@ -3,6 +3,11 @@ Inference script for the Hindi Text Fluoroscopy adaptation.
 See text_fluoroscopy_train_fixed.py for the list of fixes applied — the
 feature extraction here (vocab-space KL layer selection + last-token
 pooling) must exactly mirror what was used at training time.
+
+Label convention:
+    1 = machine-generated / AI text
+    0 = human-written text
+
 """
 
 import os
