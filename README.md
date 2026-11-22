@@ -1,3 +1,7 @@
+## Reproduce the paper
+
+See [the reproduction guide](release_tools/README.md) for the RQ1–RQ6 result files, server workspace installer, label conventions, and Figure 4 replay.
+
 # How Well Do MGT Detectors Transfer to Hindi? Performance, Transfer, and Failure Analysis
 
 This repository contains the implementation used in the paper "How Well Do MGT Detectors Transfer to Hindi? Performance, Transfer, and Failure Analysis".

@@ -1,0 +1,7 @@
+train_dataset,train_llm,n_items,n_detectors,Q,df,p_value
+hindisumm,gemini,1198,7,717.6255150815889,6,0.0
+hindisumm,llama3,1198,7,770.3329210981944,6,0.0
+hindisumm,qwen3,1198,7,760.5783972125436,6,0.0
+xquad,gemini,1198,7,800.2280785816962,6,0.0
+xquad,llama3,1198,7,983.3028816676886,6,0.0
+xquad,qwen3,1198,7,331.9677983899195,6,0.0
