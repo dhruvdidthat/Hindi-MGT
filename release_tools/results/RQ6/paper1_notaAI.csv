@@ -1,0 +1,7 @@
+file,accuracy,f1_score,roc_auc,ai_recall_label_0,human_recall_label_1
+testing_data/hindisumm/hindisumm_test_gemini.csv,0.5,0.0,0.31376,1.0,0.0
+testing_data/hindisumm/hindisumm_test_llama3.csv,0.5,0.0,0.036896,1.0,0.0
+testing_data/hindisumm/hindisumm_test_qwen3.csv,0.495,0.00980392156862745,0.02718111575104398,1.0,0.0049261083743842365
+testing_data/xquad/xquad_test_gemini.csv,0.5729166666666666,0.2545454545454546,0.04861111111111111,1.0,0.14583333333333334
+testing_data/xquad/xquad_test_llama3.csv,0.6444444444444445,0.4482758620689655,0.025679012345679007,1.0,0.28888888888888886
+testing_data/xquad/xquad_test_qwen3.csv,0.5563380281690141,0.20253164556962025,0.0033723467565959122,1.0,0.11267605633802817
