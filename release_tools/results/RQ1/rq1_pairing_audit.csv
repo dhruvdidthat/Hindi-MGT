@@ -1,7 +1,0 @@
-n_common_before_truth_check,n_dropped_truth_mismatch,n_paired_items,n_dropped_conflicting_by_model,dataset,llm
-250,0,250,"{'CONDA': 0, 'DetectGPT': 0, 'GPTZero': 0, 'Indic-BERT': 0, 'RADAR': 0, 'Text-Fluoroscopy': 0, 'XLM-RoBERTa': 0}",hindisumm,gemini
-250,0,250,"{'CONDA': 0, 'DetectGPT': 0, 'GPTZero': 0, 'Indic-BERT': 0, 'RADAR': 0, 'Text-Fluoroscopy': 0, 'XLM-RoBERTa': 0}",hindisumm,llama3
-400,0,400,"{'CONDA': 0, 'DetectGPT': 0, 'GPTZero': 0, 'Indic-BERT': 0, 'RADAR': 0, 'Text-Fluoroscopy': 0, 'XLM-RoBERTa': 0}",hindisumm,qwen3
-96,0,96,"{'CONDA': 0, 'DetectGPT': 0, 'GPTZero': 0, 'Indic-BERT': 0, 'RADAR': 0, 'Text-Fluoroscopy': 0, 'XLM-RoBERTa': 0}",xquad,gemini
-90,0,90,"{'CONDA': 0, 'DetectGPT': 0, 'GPTZero': 0, 'Indic-BERT': 0, 'RADAR': 0, 'Text-Fluoroscopy': 0, 'XLM-RoBERTa': 0}",xquad,llama3
-143,0,143,"{'CONDA': 0, 'DetectGPT': 0, 'GPTZero': 0, 'Indic-BERT': 0, 'RADAR': 0, 'Text-Fluoroscopy': 0, 'XLM-RoBERTa': 0}",xquad,qwen3
