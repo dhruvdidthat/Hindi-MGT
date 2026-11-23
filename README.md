@@ -1,94 +1,177 @@
-# How Well Do Machine Generated Text Detectors Transfer to Hindi?
-## Performance, Transfer, and Failure Analysis
+# How Well Do Machine Generated Text Detectors Transfer to Hindi? Performance, Transfer, and Failure Analysis
 
-This repository accompanies the Hindi MGT study. It includes the HindiSumm and XQuad-Hindi training and test splits, the original detector implementations, the example-level evaluation outputs for all six research questions, and the code for the performance, statistical, and linguistic analyses.
+This study asks whether a detector can still tell human-written Hindi from machine-generated Hindi when the dataset, generator, or prompt changes. This repository includes the data, detector implementations, saved predictions, and analysis code used to study those changes.
 
-## Reproduce the results on CPU
+**To reproduce the paper’s results, start with the three steps below.** You can run them on a CPU. The repository already contains the detector predictions, so this part requires no GPU, model downloads, trained checkpoints, or access to the authors’ server. For training a detector or scoring new text, see [Running detectors on new data](#running-detectors-on-new-data).
 
-Run these commands from a clean clone of this revision using Python 3.12. A GPU and model checkpoints are required only for new model runs.
+## 1. Download the repository
+
+Install Git and Python 3.12. In a terminal, run:
+
+```bash
+git clone https://github.com/dhruvdidthat/Hindi-MGT.git
+cd Hindi-MGT
+```
+
+Run the remaining commands from this folder, which contains this README. If you already have the repository, open a terminal in that folder.
+
+## 2. Install the analysis packages
+
+A virtual environment keeps the packages for this study together. On **Linux or macOS**, run:
 
 ```bash
 python3.12 -m venv .venv-analysis
 source .venv-analysis/bin/activate
+```
+
+On **Windows PowerShell**, use:
+
+```powershell
+py -3.12 -m venv .venv-analysis
+.\.venv-analysis\Scripts\Activate.ps1
+```
+
+Then, on either platform, run:
+
+```bash
 python -m pip install -r analysis/requirements.txt
+```
+
+Use the versions in this file for the paper analysis. For example, SciPy versions can give different Wilcoxon p-values when observations have tied ranks or zero differences.
+
+## 3. Generate the tables and figures
+
+```bash
 python analysis/replay.py
 ```
 
-The command rebuilds the score-based decisions, checks the archived Text-Fluoroscopy conversions, runs the statistical analyses, generates tables and renders figures. Outputs are written under `outputs/`. Each verified comparison prints its filename and number of rows. The reference tables under `analysis/reference/` are used only in the final comparison. The dependency pins specify the tested replay environment. In particular, SciPy's default Wilcoxon calculation differs between versions in the presence of tied ranks or zeros.
+This command rebuilds the GPTZero and DetectGPT decisions, checks the Text-Fluoroscopy label conversion, and uses the released predictions to calculate the results. It also evaluates Nota AI and Grape, draws the figures, and compares the numerical outputs with the study’s reference tables. The final check prints a filename and the number of rows verified for each successful comparison. A failed check stops the run and names the comparison to inspect.
 
-| Study question | Distributed example-level inputs | Output |
-|---|---|---|
-| RQ1. In-domain detection | experiments/rq1_3 | Six matched source/target settings, Table 4, Cochran’s Q, paired McNemar comparisons with Holm correction, bootstrap intervals |
-| RQ2. Transfer to a different LLM | experiments/rq1_3 | Twelve within-dataset generator transfers, Table 5, detector stability, Figure 2 |
-| RQ3. Transfer to a different dataset | experiments/rq1_3 | Six transfers with generator fixed, Table 6 and Figure 3 |
-| RQ4. Unseen dataset and generator | experiments/rq4 | Six source configurations evaluated on COLING 2025 Hindi/GPT-4o, Table 7, paired comparisons and Friedman tests |
-| RQ5. Change of generation prompt | experiments/rq5 (new) and experiments/rq1_3 (original) | Twelve configurations per detector per arm, limited to Gemini and Qwen3, Table 8 and Wilcoxon comparisons |
-| RQ6. External multilingual systems | experiments/rq6 | Nota AI and Grape, seven targets per system, Table 9 |
-
-`outputs/tables_4_to_8.csv` identifies detector, source dataset and generator, target dataset and generator, AI recall, human recall and AUROC. When an archived prediction file lacks continuous scores, the 78 corresponding AUROCs come from the original inference summaries in `data/summary_auc.csv`. The output identifies the source summary filename. The remaining 804 numbers are computed from predictions. `outputs/table9_printed.csv` uses four decimal places as in the paper. Full precision is in `outputs/rq6_metrics.csv`.
-
-## Labels, scores and corrections
-
-We use **AI = 1 and human = 0** in the core analysis and orient continuous scores so that higher values indicate AI. AI recall is the fraction of AI examples detected. Human recall is the fraction of human examples recognized as human. The core analysis computes F1 with AI as the positive class. A model output labelled “class 1” refers to the training label index. Its meaning depends on the data and export convention.
-
-| Detector | Interpretation of historical exports |
+| What you want to see | Where to look after the run |
 |---|---|
-| XLM-R | Raw 0 denotes AI in the original conditions. New-prompt exports use class 1 for AI and supply its probability. |
-| Indic-BERT | Raw 0 denotes AI. Hard predictions suffice for recall. AUROC needs ranking scores or an archived inference summary. |
-| CONDA | Raw 0 denotes AI. Where available the class-1 score measures human probability. Target adaptation uses target texts. |
-| RADAR | Raw 0 denotes AI. Where a human probability was recorded, its complement gives the AI score. |
-| Text-Fluoroscopy | The published implementation names the probability column by class index. For the archived Text-Fluoroscopy outputs, raw class 0 denotes AI, so we reverse the stored class-1 probability for AUROC. We also map both stored labels to their semantic classes before reporting recall. |
-| GPTZero | mGPT perplexity only. Inputs are truncated to 512 tokens. We predict AI when perplexity is at or below the source threshold. The ranking score is negative perplexity. |
-| DetectGPT | mGPT/mT5 perturbation scoring. Higher LLR indicates stronger AI evidence. The calibrated paper prediction uses LLR at or above the frozen source cutoff. |
+| Tables 4–8, with one row per detector and condition | `outputs/tables_4_to_8.csv` |
+| Table 9, rounded to four decimal places as in the paper | `outputs/table9_printed.csv` |
+| Full-precision results for Nota AI and Grape | `outputs/rq6_metrics.csv` |
+| Individual statistical tests | CSVs in `outputs/` with names beginning with `rq1_` through `rq5_` |
+| Figures 1–6 | `outputs/figures/figure1.pdf` through `figure6.pdf` |
+| Figure 7, the manually annotated examples | `figures/figure7_examples.png`, included with the repository |
 
-**DetectGPT.** The original implementation includes a fixed-zero decision rule and assumes class 1 denotes AI in its evaluation. The audited source-training score caches encode AI as 0. Fitting a threshold with the opposite positive class changes the ROC objective, and replacing a source-specific cutoff by zero can change the decision even when the LLR is identical. The correction reuses the measured LLRs. It creates new prediction tables from the existing examples. The corpus and perturbation draws are preserved.
+For a first example, open `tables_4_to_8.csv` and filter for Table 4, source dataset `hindisumm`, source LLM `gemini`, and detector `DetectGPT`. That row describes a detector calibrated on HindiSumm/Gemini and evaluated on the corresponding test split. Its AUROC rounds to 0.37, its AI recall to 0.97, and its human recall to 0.08. The last two numbers mean that it recognized most AI examples but few human examples in that condition.
 
-Run `python analysis/rebuild_detectgpt.py`. For each of the six source pairs it reads `data/detectgpt/train_*.csv.gz`, converts raw label 0 to AI, computes the ROC for LLR and selects the first maximum of TPR minus FPR. It then applies that source cutoff to every associated target, including COLING and the changed prompts. The published score projections include the reference label aligned to each scored example. RQ5 scores were aligned to the new-prompt reference by normalized text and occurrence number. Each replay checks the score, reference class and decision against the released evaluation rows. Negative cutoffs are valid for this signed statistic.
+## Find an experiment
 
-**GPTZero.** Run `python analysis/rebuild_gptzero.py`. It joins saved perplexities to the source dataset and generator in `data/source_thresholds.csv`. The source training split supplies the Youden-J cutoff. The target labels are used for evaluation only. This route reproduces the frozen decisions and scores. Independently refitting those original thresholds requires the source-training perplexities. For a fresh fit, the detector's inference script computes them from the training texts.
+A **generator** writes the AI text. A **detector** predicts who wrote it. The **source** is the dataset and generator used to train or calibrate a detector. The **target** is the dataset and generator on which it is evaluated.
 
-**Text-Fluoroscopy and fresh exports.** Run `python analysis/check_text_fluoroscopy.py` to check all archived conditions. To convert a new CSV with the *same* raw convention, run the following command. Inputs must already contain aligned reference labels and model outputs. The converter creates a new file and rejects a pre-existing output.
+| Question | What changes at test time? | Prediction folder | Main results |
+|---|---|---|---|
+| RQ1 · In-domain | Same dataset and generator, evaluated on the test split. Six conditions per detector. | [rq1_3](experiments/rq1_3/) | Table 4, bootstrap intervals, Cochran’s Q, and paired McNemar tests with Holm correction |
+| RQ2 · LLM transfer | The generator changes within the same dataset. Twelve conditions per detector. | [rq1_3](experiments/rq1_3/) | Table 5, detector stability, Figure 2 |
+| RQ3 · Dataset transfer | The dataset changes while the generator stays the same. Six conditions per detector. | [rq1_3](experiments/rq1_3/) | Table 6 and Figure 3 |
+| RQ4 · Unseen dataset and generator | Each of the six source configurations is tested on COLING 2025 Hindi with GPT-4o. | [rq4](experiments/rq4/) | Table 7, paired detector comparisons and Friedman tests |
+| RQ5 · Prompt change | Compare the original and new prompts for Gemini and Qwen3. Each arm has twelve configurations per detector. | [Original](experiments/rq1_3/) and [new prompt](experiments/rq5/) | Table 8 and paired Wilcoxon tests |
+| RQ6 · Multilingual detectors | Evaluate Nota AI and Grape on seven Hindi targets per system. | [rq6](experiments/rq6/) | Table 9 |
+
+**Why are there only two Python scripts in `experiments/rq1_3/`?** The folder groups three experiments that use the same test splits. Its two Python files are additional scripts for applying GPTZero and DetectGPT across source and target conditions. The implementation for each of the seven detectors lives under [detectors/](detectors/). The shared [predictions.csv.gz](experiments/rq1_3/predictions.csv.gz) contains all seven detectors, with 4,916 prediction rows each across RQ1–RQ3. The analysis reads this file for all three questions. For example, [xlm_roberta_inference.py](detectors/xlmr/xlm_roberta_inference.py) is where to look for XLM-R inference.
+
+## Understand the input data
+
+- **Training and testing splits.** `training_data/` and `testing_data/` each contain six CSVs, one for each combination of HindiSumm or XQuad-Hindi with Gemini, Llama3 or Qwen3. The twelve files were checked against the study splits using SHA-256. In these shared input files, raw label 0 means AI and 1 means human.
+- **Perturbed texts and prompts.** `perturbed_training_data/` and `perturbed_testing_data/` hold the perturbed versions used by detectors that require them. `prompt_change/` holds the prompt-change data. RQ5 selects the Gemini and Qwen3 conditions.
+- **Saved predictions.** Each `experiments/*/predictions.csv.gz` is a compressed CSV. Python can read it directly with `pandas.read_csv`. A row records a detector’s prediction for one example. In the core experiments, the model, source and target columns identify the run. The text key identifies a normalized text for matching. The same text can appear more than once when several detectors or source configurations evaluate it.
+- **COLING.** The replay includes deidentified prediction rows and saved scores for the Hindi test set. Scoring COLING texts afresh requires the original Hindi text and any perturbed version required by the chosen detector.
+
+## How labels and scores become paper results
+
+**AI recall** is the fraction of AI examples recognized as AI. **Human recall** is the fraction of human examples recognized as human. **Accuracy** counts correct predictions across both classes. **F1** combines precision and recall for the designated positive class. **AUROC** measures how well a continuous score ranks examples across the two classes.
+
+For RQ1–RQ5, the analysis uses **AI = 1 and human = 0**, computes F1 with AI as positive, and orients continuous scores so that higher values indicate AI. A detector’s raw output may use a different convention. In particular, a column called “probability of class 1” takes its meaning from the class labels used by that implementation.
+
+| Detector | How to interpret its saved output |
+|---|---|
+| XLM-R | Raw 0 means AI in the original conditions. In new-prompt exports, raw 1 means AI and the class-1 probability is already an AI score. |
+| Indic-BERT | Raw 0 means AI. A saved class decision is sufficient to calculate recall. |
+| CONDA | Raw 0 means AI. The class-1 probability, when available, measures human probability. CONDA uses target texts for adaptation. |
+| RADAR | Raw 0 means AI. Where the export includes human probability, subtract it from 1 to obtain the AI score. |
+| Text-Fluoroscopy | In the study exports, raw 0 means AI. Convert both the reference label and the predicted label. For AUROC use 1 minus the stored class-1 probability. |
+| GPTZero | Uses mGPT perplexity. Lower perplexity gives stronger AI evidence. |
+| DetectGPT | Uses mGPT/mT5 perturbation scores. Higher LLR gives stronger AI evidence. |
+
+**Where AUROC comes from.** Some prediction files contain only the final class decision. For 78 AUROC entries, the analysis uses the recorded AUROC from the corresponding inference summary in `data/summary_auc.csv`. The `auc_source` column in the output identifies these summaries. The other 804 values across Tables 4–8 are calculated from saved predictions and scores. Files in `analysis/reference/` are used for the final numerical comparison.
+
+### DetectGPT
+
+The base scoring script includes a fixed cutoff of zero and an evaluation convention in which class 1 means AI. The saved source-training scores used in the paper label AI as 0. Both details matter. Using the opposite positive class changes which cutoff is selected. Using zero instead of the source cutoff can change a decision even when the text receives exactly the same score.
+
+To reproduce the paper decisions, run `python analysis/rebuild_detectgpt.py`. For each of the six source combinations the script:
+
+1. Reads the saved LLR scores from `data/detectgpt/train_*.csv.gz` and identifies raw label 0 as AI.
+2. Chooses the first cutoff that maximizes the true-positive rate minus the false-positive rate on that source training split (Youden’s J).
+3. Predicts AI when the test LLR is **at or above** the chosen cutoff. The same source cutoff applies to its transfer, COLING and new-prompt conditions. An LLR and its cutoff can both be negative.
+4. Checks the reference class, score and decision against the released rows. Each scored example has its corresponding reference label. For RQ5, normalized text and occurrence number were used to match repeated texts correctly.
+
+This procedure reuses the recorded perturbation scores. It reproduces the decisions without sampling new perturbations or generating new text.
+
+### GPTZero
+
+Inputs are truncated to **512 tokens**. GPTZero predicts AI when perplexity is **at or below** the source threshold. The analysis uses negative perplexity as the ranking score so that larger values indicate AI.
+
+Run `python analysis/rebuild_gptzero.py` to combine each saved test perplexity with its source cutoff in `data/source_thresholds.csv`. Each cutoff was chosen with Youden’s J on the source training split. Target labels are used only to evaluate the predictions. To fit a threshold again you need the source-training perplexities. For a fresh fit, the detector script computes them from the training texts.
+
+### Text-Fluoroscopy and other raw CSVs
+
+Run `python analysis/check_text_fluoroscopy.py` to verify the label and probability conversions across the study conditions. Suppose a **new** Text-Fluoroscopy export uses the same convention, with AI stored as 0 and class-1 probability stored in `predicted_prob_label1`. The following command creates a separate analysis-ready CSV:
 
 ```bash
-python analysis/normalize_export.py predictions.csv canonical.csv \
-  --truth true_label --truth-ai 0 --prediction predicted_label --prediction-ai 0 \
-  --score predicted_prob_label1 --kind p-human
+python analysis/normalize_export.py predictions.csv canonical.csv --truth true_label --truth-ai 0 --prediction predicted_label --prediction-ai 0 --score predicted_prob_label1 --kind p-human
 ```
 
-For an export where class 1 genuinely denotes AI, use the corresponding AI index and `--kind p-ai`. Supply the truth and prediction indices separately if the input split and output head use different encodings. Use the raw-label and probability columns from that particular version. Already canonical tables in `experiments/` can be used directly. For fresh GPTZero or DetectGPT score files, use `--score perplexity --kind perplexity` or `--score llr --kind llr` with `--threshold` set to the applicable source cutoff.
+The input must already pair each prediction with its correct reference label. The converter requires a new output filename. For another export, check the meaning of its columns first. The truth and prediction AI indices can be specified separately. Use `--kind p-ai` when the score is already an AI probability. For new GPTZero or DetectGPT scores, use `--score perplexity --kind perplexity` or `--score llr --kind llr`, together with `--threshold` set to that source’s cutoff. The core prediction tables under `experiments/` already use the analysis convention.
 
-**Nota AI and Grape.** Run `python experiments/rq6/evaluate.py`. F1 uses human text as the positive class for Nota AI and AI text for Grape. Both evaluators compute binary F1 on index 1. Grape inverts the input reference labels after writing predictions and before computing metrics. The replay follows this sequence. Nota AI's evaluator directly compares its reference labels to the exported predictions. Its historical AUROC passes the exported score to ROC with raw class 1 as positive. Table 9 preserves that evaluator convention. This distinction matters when interpreting AUROC alongside the core canonical results.
+### Nota AI and Grape
 
-## Data and prediction files
+Run `python experiments/rq6/evaluate.py` to generate Table 9. Both external evaluators compute binary F1 for index 1. **F1 uses human text as the positive class for Nota AI and AI text for Grape.** Grape inverts the input reference labels after writing predictions and before calculating metrics. Nota AI compares its reference labels directly with its predictions. Its AUROC uses the exported score with raw class 1 as positive. Table 9 follows each system’s evaluator.
 
-- `training_data/` and `testing_data/` contain six files per split, organized by dataset and generator (Gemini, Llama3 and Qwen3). The twelve original files matched the audited splits by SHA-256. The shared reference convention is raw 0 for AI.
-- `perturbed_training_data/`, `perturbed_testing_data/` and `prompt_change/` retain the original detector inputs. The paper's RQ5 analysis selects the Gemini and Qwen3 conditions from the available files.
-- `experiments/*/predictions.csv.gz` contains one row per detector prediction. Core keys identify detector and train/test dataset–generator pairs. The text key identifies a normalized text for pairing. Repeated predictions across runs remain separate observations. Scores can be missing when the detector recorded only a class decision.
-- RQ1–RQ3 include precomputed Hindi linguistic features. `analysis/linguistic_features.py` defines sentence and word segmentation, syllable and conjunct counts, and the length normalization used for PSW30 and JUK. `analysis/matching.py` defines normalized text matching and handles duplicate and conflicting keys for paired comparisons.
-- The standalone replay includes deidentified COLING prediction rows and cached scores. New COLING inference requires the original Hindi test text and any detector-specific perturbed variant.
+## Statistical tests and linguistic features
 
-## Statistical and linguistic analysis
+To run the RQ1–RQ5 statistical analyses separately, use `python analysis/reproduce.py`. The methods are implemented in `analysis/pipeline.py`, `analysis/pipeline_rq45.py` and `analysis/stats_tests.py`. In RQ5, the pairing unit is a detector evaluated under the same source and target configuration with each prompt. The two sets of texts can differ in size, and some new-prompt texts overlap the training data. The comparison describes those evaluated sets.
 
-`analysis/reproduce.py` runs the RQ1–RQ5 tests independently of figure rendering. The implementation is in `pipeline.py`, `pipeline_rq45.py` and `stats_tests.py`. Original and new prompt results are paired by detector, source and target configuration. RQ5 uses the archived cohorts. Their sizes can differ and some new-prompt texts overlap training. The comparison describes those cohorts.
+The RQ1–RQ3 prediction file includes the linguistic features calculated for the texts. `analysis/linguistic_features.py` defines sentence and word segmentation, syllable and conjunct counts, and length normalization for PSW30 and JUK. `analysis/matching.py` defines how to match normalized texts and handle duplicate or conflicting keys in paired comparisons.
 
-`python figures/render.py` writes vector PDFs for Figures 1–6 after the analysis run. Figure 1 uses whitespace word counts, human examples from the Gemini training split for each dataset, and AI examples from each generator. It uses the audited shared split labels. The historical plotting notebook assigned the two raw indices oppositely, so compare the Figure 1 legend with the manuscript before claiming an exact visual reproduction. Figures 2 and 3 summarize transfer recall. Figure 4 standardizes each feature within each detector/source/target run and averages standardized observations by outcome. Figure 5 averages the paired error Jaccard values across in-domain conditions. Figure 6 uses regression coefficients and nominal 95% intervals from standard errors clustered by text. Figure 7 is a manually annotated qualitative illustration. Its original image is included in `figures/figure7_examples.png`. The plotting scripts reproduce the analyses with a fresh layout.
+After the statistics run, `python figures/render.py` renders Figures 1–6:
+
+| Figure | How to read it |
+|---|---|
+| 1 | Word-count distributions. Words are split on whitespace. For each dataset the human examples come from the Gemini training split, and the generated examples come from each generator. The renderer uses the verified split labels. The study notebook used the opposite raw-label assignment for this plot, which matters when comparing the legend with the manuscript. |
+| 2 and 3 | Recall under generator transfer and dataset transfer, respectively. |
+| 4 | Each feature is standardized within a single detector/source/target run, using that test set’s mean and standard deviation. The bars average those standardized values by classification outcome. Zero represents the local test-set mean. |
+| 5 | Average Jaccard overlap between two detectors’ errors across in-domain conditions. |
+| 6 | Regression coefficients with nominal 95% intervals based on standard errors clustered by text. |
+
+The PDFs use the released plotting layout. Figure 7 is an illustration selected and annotated by the authors.
 
 ## Running detectors on new data
 
-The seven original implementations under `detectors/` retain the code and hyperparameters of revision `2a642794`. Run their entry points from the repository root so relative dataset paths resolve. Use a separate environment with `python -m pip install -r requirements.txt`. Some entries specify a CUDA device index. Model downloads, memory requirements and any restricted model access depend on the detector.
+Training and inference use a separate set of dependencies. Create a separate Python environment and install `python -m pip install -r requirements.txt`. Run the detector scripts from the **repository root**, since they use relative paths for datasets and outputs. Some scripts specify a CUDA device index. Check the device setting, model access, available GPU memory and output directories before starting a new run.
 
-| Detector directory | Training | Inference |
+| Detector folder | Training or calibration | Inference |
 |---|---|---|
-| detectors/xlmr | xlm_roberta_train.py | xlm_roberta_inference.py |
-| detectors/indicbert | IndicBert_train.py | IndicBert_inference.py |
-| detectors/conda | conda.py | Integrated in conda.py |
-| detectors/radar | radar_train.py | radar_inference.py |
-| detectors/text_fluoroscopy | text_fluoroscopy_train.py | text_fluoroscopy_inference.py |
-| detectors/gptzero | Source calibration in gpt_zero.py | gpt_zero.py |
-| detectors/detectgpt | Source calibration for the paper in analysis/rebuild_detectgpt.py | detect_gpt.py computes the original perturbation scores |
+| [XLM-R](detectors/xlmr/) | `xlm_roberta_train.py` | `xlm_roberta_inference.py` |
+| [Indic-BERT](detectors/indicbert/) | `IndicBert_train.py` | `IndicBert_inference.py` |
+| [CONDA](detectors/conda/) | `conda.py` | Included in the same script |
+| [RADAR](detectors/radar/) | `radar_train.py` | `radar_inference.py` |
+| [Text-Fluoroscopy](detectors/text_fluoroscopy/) | `text_fluoroscopy_train.py` | `text_fluoroscopy_inference.py` |
+| [GPTZero](detectors/gptzero/) | Source calibration in `gpt_zero.py` | `gpt_zero.py` |
+| [DetectGPT](detectors/detectgpt/) | Source calibration for the paper in `analysis/rebuild_detectgpt.py` | `detect_gpt.py` computes perturbation scores |
 
-For example, run `python detectors/xlmr/xlm_roberta_train.py` followed by `python detectors/xlmr/xlm_roberta_inference.py`. For calibrated transfer scoring, see `experiments/rq1_3/detect_gpt_cross_domain.py` and `gpt_zero_cross_domain.py`. The RQ4 and RQ5 folders include the available dedicated inference implementations. Run these from the repository root with the input files and checkpoints specified in their configuration sections. Fresh model runs may write into their configured results roots. Keep fresh results separate from the distributed evaluation files.
+For example, to train XLM-R and then run its inference script:
 
-The RQ6 implementations are under `experiments/rq6/nota_ai/` and `experiments/rq6/grape/`. For fresh external inference, run the relevant `inference_on_csv.py` or `ensemble_inference.py` in a working directory containing its `testing_data/` tree and required model files. Nota AI expects MGTDetectionModel.pt and its feature models. Grape requires the two LoRA adapters and the ensemble checkpoint specified in its script. Model weights are excluded from this distribution.
+```bash
+python detectors/xlmr/xlm_roberta_train.py
+python detectors/xlmr/xlm_roberta_inference.py
+```
 
-Exact replay here refers to evaluation from frozen scores and predictions. Fresh training and perturbation sampling also depend on checkpoint revisions, GPU kernels and software versions. The release verification exercises the CPU replay. A full independent GPU retraining of every detector is outstanding.
+For calibrated transfer scoring, the two dedicated scripts are in `experiments/rq1_3/`. The RQ4 and RQ5 folders contain the available scripts specific to COLING and prompt-change inference. Each script’s configuration identifies the input files, checkpoints and output paths it expects. Keep outputs from new runs in a separate results directory.
+
+For fresh RQ6 inference, use `experiments/rq6/nota_ai/inference_on_csv.py` or `experiments/rq6/grape/ensemble_inference.py`. Run the chosen script from a working directory with the expected `testing_data/` tree and model files. Nota AI requires `MGTDetectionModel.pt` and its feature models. Grape requires the two LoRA adapters and the ensemble checkpoint named in its script. These weights are obtained separately.
+
+The CPU workflow verifies evaluation from the released scores and predictions. Fresh GPU training and perturbation sampling also depend on model checkpoint versions, software, and GPU settings. Exact numerical agreement after retraining every detector has not been independently verified.
