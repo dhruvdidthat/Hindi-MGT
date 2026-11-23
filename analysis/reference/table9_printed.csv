@@ -1,0 +1,15 @@
+detector,file,accuracy,f1_score,roc_auc,ai_recall,human_recall
+notaAI,testing_data/hindisumm/hindisumm_test_gemini.csv,0.5,0.0,0.3138,1.0,0.0
+notaAI,testing_data/hindisumm/hindisumm_test_llama3.csv,0.5,0.0,0.0369,1.0,0.0
+notaAI,testing_data/hindisumm/hindisumm_test_qwen3.csv,0.495,0.0098,0.0272,1.0,0.0049
+notaAI,testing_data/xquad/xquad_test_gemini.csv,0.5729,0.2545,0.0486,1.0,0.1458
+notaAI,testing_data/xquad/xquad_test_llama3.csv,0.6444,0.4483,0.0257,1.0,0.2889
+notaAI,testing_data/xquad/xquad_test_qwen3.csv,0.5563,0.2025,0.0034,1.0,0.1127
+notaAI,testing_data/coling/coling_cleaned_data.csv,0.5805,0.3302,0.1948,0.9533,0.207
+grape,testing_data/hindisumm/hindisumm_test_gemini.csv,0.864,0.8777,0.9702,0.976,0.752
+grape,testing_data/hindisumm/hindisumm_test_llama3.csv,0.884,0.8945,0.9681,0.984,0.784
+grape,testing_data/hindisumm/hindisumm_test_qwen3.csv,0.89,0.8991,0.9944,0.9949,0.7882
+grape,testing_data/xquad/xquad_test_gemini.csv,0.7708,0.7179,0.9184,0.5833,0.9583
+grape,testing_data/xquad/xquad_test_llama3.csv,0.9667,0.9663,0.9956,0.9556,0.9778
+grape,testing_data/xquad/xquad_test_qwen3.csv,0.9371,0.9362,0.9832,0.9167,0.9577
+grape,testing_data/coling/coling_hindi_data.csv,0.8874,0.8966,0.9771,0.975,0.7997
