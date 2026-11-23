@@ -1,6 +1,6 @@
 # How Well Do Machine Generated Text Detectors Transfer to Hindi? Performance, Transfer, and Failure Analysis
 
-## In the Proceedings of ACM WSDM27
+## In the Proceedings of [ACM WSDM 27](https://wsdm-conference.org/2027/)
 
 This study asks whether a detector can still tell human-written Hindi from machine-generated Hindi when the dataset, generator, or prompt changes. This repository includes the data, detector implementations, saved predictions, and analysis code used to study those changes.
 
