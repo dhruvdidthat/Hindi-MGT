@@ -1,5 +1,7 @@
 # How Well Do Machine Generated Text Detectors Transfer to Hindi? Performance, Transfer, and Failure Analysis
 
+## In the Proceedings of ACM WSDM27
+
 This study asks whether a detector can still tell human-written Hindi from machine-generated Hindi when the dataset, generator, or prompt changes. This repository includes the data, detector implementations, saved predictions, and analysis code used to study those changes.
 
 **To reproduce the paper’s results, start with the three steps below.** You can run them on a CPU. The repository already contains the detector predictions, so this part requires no GPU, model downloads, trained checkpoints, or access to the authors’ server. For training a detector or scoring new text, see [Running detectors on new data](#running-detectors-on-new-data).
